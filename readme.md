@@ -1,5 +1,5 @@
 # Hybrid A Star
-![GIF](images/Hybrid A_ path planning + MPC controller+倒车 .gif)
+![GIF](gif.gif)
 
 ## 1. Introduce
 

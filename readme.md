@@ -4,8 +4,6 @@
 
 Hybrid A Star achieved very good results in the DARPA Urban Challenge. And after years of development, the algorithm has been verified to perform very well in parking and some autonomous driving environments without driving rules.
 
-Since the author did not open source the algorithm, it took me weeks to reproduce the algorithm. The final result is close to the speed and effect in the paper.
-
 This code is based on the works of https://github.com/zm0612/Hybrid_A_Star and https://github.com/teddyluo/hybrid-a-star-annotation.
 See [bilibili](https://www.bilibili.com/video/BV14y411a77H/?spm_id_from=333.999.0.0)
 

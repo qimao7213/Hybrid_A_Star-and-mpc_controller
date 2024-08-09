@@ -6,25 +6,8 @@ Hybrid A Star achieved very good results in the DARPA Urban Challenge. And after
 
 Since the author did not open source the algorithm, it took me weeks to reproduce the algorithm. The final result is close to the speed and effect in the paper.
 
-**Video 0**: [bilibili](https://www.bilibili.com/video/BV1oU4y1d7xt?spm_id_from=333.999.0.0) | [YouTube](https://www.youtube.com/watch?v=MEc1jrEmg0o)
-
-**Video 1**: [bilibili](https://www.bilibili.com/video/BV1qq4y1v77g?spm_id_from=333.999.0.0) | [YouTube](https://www.youtube.com/watch?v=eohHXEIpevg)
-
-**Case 1**
-
-<img src="images/img0.png" alt="img0" style="zoom: 33%;" />
-
-**Case 2**
-
-<img src="images/img3.png" alt="img3" style="zoom: 33%;" />
-
-**Case 3**
-
-<img src="images/img1.png" alt="img1" style="zoom: 33%;" />
-
-**Case 4**
-
-<img src="images/img2.png" alt="img2" style="zoom: 33%;" />
+This code is based on the works of https://github.com/zm0612/Hybrid_A_Star and https://github.com/teddyluo/hybrid-a-star-annotation.
+See [bilibili](https://www.bilibili.com/video/BV14y411a77H/?spm_id_from=333.999.0.0)
 
 ## 2. Prerequisites
 

@@ -1,5 +1,5 @@
 # Hybrid A Star
-![GIF](gif.gif)
+![GIF](images/gif.gif)
 
 ## 1. Introduce
 

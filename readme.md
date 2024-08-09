@@ -62,11 +62,38 @@ roslaunch hybrid_a_star_zm0612 hybrid_a_star_zm0612.launch
 > If your start and end points are too close to obstacles, the collision detection mechanism may be triggered and no feasible paths will be searched and displayed
 
 ## 5. Mpc controller
-The car is modeled as a bicycle model. NMPC is used to make the car follow the planned path.Treat the car as a bicycle model and use NMPC to make the car follow the planned path.
+```shell
+The car is modeled as a bicycle model. NMPC is used to make the car follow the planned path.
+# Clone the repository in the /src
+git clone https://github.com/qimao7213/MPC_car.git
 
+# Build
+cd your_ws
+catkin_make
 
+#Run mpc
+roslaunch mpc_car simulation.launch
+```
+## 6. 
+### Bug 报告和改进建议 | Bug Reports and Improvement Suggestions
 
-## 6. References
+当前程序可能还存在一些 Bug 或不稳定的地方。如果你在使用过程中发现了问题，或者有更好的解决方案，请不要犹豫，通过以下方式告诉我：
+
+The current program may still have some bugs or instability issues. If you encounter any problems during use or have a better solution, please don't hesitate to let me know through the following methods:
+
+1. **提交 Issue | Submit an Issue**: 你可以在 [Issues 页面](链接到你的项目的Issues页面) 提交一个新的 Issue，描述你遇到的问题或改进建议。
+
+   You can submit a new issue on the [Issues page](link to your project's Issues page), describing the problem you've encountered or your improvement suggestions.
+
+2. **Pull Request | Pull Request**: 如果你已经有了解决方案，可以直接 Fork 这个仓库并提交 Pull Request，我会尽快进行审核和合并。
+
+   If you already have a solution, you can directly Fork this repository and submit a Pull Request. I will review and merge it as soon as possible.
+
+在报告 Bug 或提出建议时，请尽可能提供详细的信息，例如复现步骤、环境设置、错误日志等，以帮助我更快地理解和解决问题。
+
+When reporting bugs or suggesting improvements, please provide as much detail as possible, such as reproduction steps, environment settings, error logs, etc., to help me understand and resolve the issue more quickly.
+
+## 7. References
 
 (1). [Practical Search Techniques in Path Planning for Autonomous Driving](https://ai.stanford.edu/~ddolgov/papers/dolgov_gpp_stair08.pdf)
 

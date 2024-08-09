@@ -16,9 +16,9 @@ See [bilibili](https://www.bilibili.com/video/BV14y411a77H/?spm_id_from=333.999.
 (2). **ROS Melodic**: I'm developing on the melodic version. Using other versions of ROS 1, it should also work normally
 
 ```shell
-sudo apt-get install ros-melodic-costmap-*
-sudo apt-get install ros-melodic-map-server
-sudo apt-get install ros-melodic-tf
+sudo apt-get install ros-noetic-costmap-*
+sudo apt-get install ros-noetic-map-server
+sudo apt-get install ros-noetic-tf
 ```
 
 (3). **Eigen 3**
@@ -37,14 +37,14 @@ sudo apt-get install libgoogle-glog-dev
 
 ```shell
 # new folder
-mkdir hybrid_a_star_ws/src -p
-cd hybrid_a_star_ws/src
+mkdir your_ws/src -p
+cd your_ws/src
 
 # Clone the repository
-git clone https://github.com/zm0612/Hybrid_A_Star.git
+git clone https://github.com/qimao7213/Hybrid_A_Star-and-mpc_controller.git
 
 # Build
-cd hybrid_a_star_ws
+cd your_ws
 catkin_make
 ```
 
@@ -61,7 +61,12 @@ roslaunch hybrid_a_star_zm0612 hybrid_a_star_zm0612.launch
 
 > If your start and end points are too close to obstacles, the collision detection mechanism may be triggered and no feasible paths will be searched and displayed
 
-## 5. References
+## 5. Mpc controller
+The car is modeled as a bicycle model. NMPC is used to make the car follow the planned path.Treat the car as a bicycle model and use NMPC to make the car follow the planned path.
+
+
+
+## 6. References
 
 (1). [Practical Search Techniques in Path Planning for Autonomous Driving](https://ai.stanford.edu/~ddolgov/papers/dolgov_gpp_stair08.pdf)
 

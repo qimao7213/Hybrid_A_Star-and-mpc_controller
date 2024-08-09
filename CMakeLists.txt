@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(hybrid_a_star)
+project(hybrid_a_star_zm0612)
 
 message(STATUS "Hybrid A star")
 message(STATUS "Author: Zhang Zhimeng")
@@ -20,8 +20,11 @@ else ()
                          Please use a different C++ compiler")
 endif ()
 
-set(ADDITIONAL_CXX_FLAG "-Wall -O3 -march=native")
+set(ADDITIONAL_CXX_FLAG "-Wall")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ADDITIONAL_CXX_FLAG}")
+
+set(CMAKE_CXX_FLAGS " -O3")
+set(CMAKE_BUILD_TYPE "Release")
 
 # Eigen
 include(cmake/FindEigen.cmake)
@@ -37,11 +40,13 @@ find_package(
     nav_msgs
     roscpp
     tf
+    sensor_msgs
 )
-
+find_package(OpenCV 4.7.0 REQUIRED EXACT)
 include_directories(
     include
     ${catkin_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
 )
 
 catkin_package(
@@ -59,13 +64,18 @@ add_library(
     src/init_pose_subscriber.cpp
     src/hybrid_a_star.cpp
     src/hybrid_a_star_flow.cpp
+    src/dubins.cpp
+    src/dynamicvoronoi.cpp
+    src/bucketedqueue.cpp
+    src/smoother.cpp
 )
 
 target_link_libraries(
     PATH_SEARCHER_LIB
     ${catkin_LIBRARIES}
     ${GLOG_LIBRARIES}
+    ${OpenCV_LIBS}
 )
 
-add_executable(run_hybrid_astar app/run_hybrid_astar.cpp)
-target_link_libraries(run_hybrid_astar PATH_SEARCHER_LIB)
+add_executable(hybrid_a_star_zm0612 app/hybrid_a_star_zm0612.cpp)
+target_link_libraries(hybrid_a_star_zm0612 PATH_SEARCHER_LIB)

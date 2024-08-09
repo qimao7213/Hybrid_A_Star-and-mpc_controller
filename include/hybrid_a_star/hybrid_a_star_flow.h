@@ -32,6 +32,8 @@
 #include "costmap_subscriber.h"
 #include "init_pose_subscriber.h"
 #include "goal_pose_subscriber.h"
+#include "hybrid_a_star/dynamicvoronoi.h"
+#include "hybrid_a_star/smoother.h"
 
 #include <ros/ros.h>
 
@@ -52,13 +54,14 @@ private:
 
     bool HasGoalPose();
 
-    void PublishPath(const VectorVec3d &path);
-
+    void PublishPath(const VectorVec4d &path);
+    void PublishPathSmoothed(const VectorVec4d &spath);
     void PublishSearchedTree(const VectorVec4d &searched_tree);
 
-    void PublishVehiclePath(const VectorVec3d &path, double width,
+    void PublishVehiclePath(const VectorVec4d &path, double width,
                             double length, unsigned int vehicle_interval);
 
+    void PublishCurrentStartAndGoal();
 private:
     std::shared_ptr<HybridAStar> kinodynamic_astar_searcher_ptr_;
     std::shared_ptr<CostMapSubscriber> costmap_sub_ptr_;
@@ -66,8 +69,19 @@ private:
     std::shared_ptr<GoalPoseSubscriber2D> goal_pose_sub_ptr_;
 
     ros::Publisher path_pub_;
+    ros::Publisher spath_pub_;
+    ros::Publisher spathWithDirection_pub_;
     ros::Publisher searched_tree_pub_;
     ros::Publisher vehicle_path_pub_;
+    ros::Publisher goal_pose_pub_;
+    ros::Publisher start_pose_pub_;
+    ros::Publisher path_forward_pub_;
+    ros::Publisher path_backward_pub_;
+
+
+    /// The voronoi diagram
+    DVORONOI::DynamicVoronoi voronoiDiagram; //Voroni Diagram
+    SMOOTHER::Smoother smoother;//路径平滑实体
 
     std::deque<geometry_msgs::PoseWithCovarianceStampedPtr> init_pose_deque_;
     std::deque<geometry_msgs::PoseStampedPtr> goal_pose_deque_;

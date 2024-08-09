@@ -30,6 +30,7 @@
 
 #include "rs_path.h"
 #include "state_node.h"
+#include "dubins.h"
 
 #include <glog/logging.h>
 
@@ -45,18 +46,19 @@ public:
     HybridAStar(double steering_angle, int steering_angle_discrete_num, double segment_length,
                 int segment_length_discrete_num, double wheel_base, double steering_penalty,
                 double reversing_penalty, double steering_change_penalty, double shot_distance,
-                int grid_size_phi = 72);
+                int grid_size_phi = 72, bool reverse_enable = 1);
 
     ~HybridAStar();
 
     void Init(double x_lower, double x_upper, double y_lower, double y_upper,
+              double vehicle_length, double vehicle_width, double vehicle_rear_dis,
               double state_grid_resolution, double map_grid_resolution = 0.1);
 
     bool Search(const Vec3d &start_state, const Vec3d &goal_state);
 
     VectorVec4d GetSearchedTree();
 
-    VectorVec3d GetPath() const;
+    VectorVec4d GetPath() const;
 
     __attribute__((unused)) int GetVisitedNodesNumber() const { return visited_node_number_; }
 
@@ -144,7 +146,7 @@ private:
     double segment_length_;
     double move_step_size_;
     double steering_radian_step_size_;
-    double steering_radian_; //radian
+    double steering_radian_; //radian，转弯角度的弧度值
     double tie_breaker_;
 
     double shot_distance_;
@@ -155,6 +157,7 @@ private:
     double steering_change_penalty_;
 
     double path_length_ = 0.0;
+    bool reverse_enable_ = 1;
 
     std::shared_ptr<RSPath> rs_path_ptr_;
 

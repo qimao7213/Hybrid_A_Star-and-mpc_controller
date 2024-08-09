@@ -28,7 +28,7 @@
 #include "hybrid_a_star/rs_path.h"
 
 #include <glog/logging.h>
-
+#include <iostream>
 // P 371: TABLE 1
 const RSPath::RSPathSegmentType RSPath::RS_path_segment_type[18][5] = {
         {L, R, L, N, N},
@@ -502,7 +502,30 @@ void RSPath::CCSCC(double x, double y, double phi, RSPathData &path) {
     }
 }
 
-TypeVectorVecd<3> RSPath::GetRSPath(const Vec3d &start_state, const Vec3d &goal_state,
+//TODO：可能还是有点问题
+int findInter(const std::vector<double> &distances, const double & target)
+{
+    // 遍历数列
+    for (size_t i = 0; i < distances.size() - 1; ++i) {
+        double curr_sum = distances[i];
+        double next_sum = distances[i + 1];
+
+        if (curr_sum <= target && target <= next_sum) {
+            // std::cout << target << " 位于区间 [" << curr_sum << ", " << next_sum << ") 之间，对应第 " << i + 1 << " 个区间" << std::endl;
+            return i;
+        }
+        // if(target == distances[distances.size() - 1])
+        // {
+        //     return i;
+        // }
+    }
+    return distances.size() - 1;
+
+}
+
+
+
+TypeVectorVecd<4> RSPath::GetRSPath(const Vec3d &start_state, const Vec3d &goal_state,
                                     const double step_size, double &length) {
     RSPathData rs_path = GetRSPath(start_state.x(), start_state.y(), start_state.z(),
                                    goal_state.x(), goal_state.y(), goal_state.z());
@@ -523,12 +546,29 @@ TypeVectorVecd<3> RSPath::GetRSPath(const Vec3d &start_state, const Vec3d &goal_
 
     double phi;
 
-    TypeVectorVecd<3> path_poses;
-
+    std::vector<double> distances = {0, std::abs(rs_path.length_[0]), std::abs(rs_path.length_[1]), std::abs(rs_path.length_[2]), 
+                                     std::abs(rs_path.length_[3]), std::abs(rs_path.length_[4])};
+    std::vector<double> distances2(distances.size());
+    for(int i = 0; i < distances2.size(); i++)
+    {
+        if(i == 0) distances2[i] = distances[i];
+        else
+        {
+            distances2[i] = distances2[i - 1] + distances[i];
+        }
+    }
+    
+    // std::cout << distances[0] << ", " << distances[1] << ", " << distances[2] << std::endl;
+    TypeVectorVecd<4> path_poses;
     for (unsigned int i = 0; i <= interpolation_number; ++i) {
         double v;
-        double t = i * 1.0 / interpolation_number;
+        double t = i * 1.0 / interpolation_number;//表示在路径上的进度，百分比
         double seg = t * rs_path.Length();
+        // 确定是前进or后退
+        int inter = findInter(distances2, seg);
+        
+        double isForward = rs_path.length_[inter] > 10e-3 ? 1.0 : 0.0; 
+        // std::cout << seg << ", " << inter << ", " << rs_path.length_[inter - 1] << ", " << isForward << std::endl;
 
         Vec3d temp_pose(0.0, 0.0, start_state.z());
         for (unsigned int j = 0; j < 5u && seg > 0; ++j) {
@@ -567,7 +607,7 @@ TypeVectorVecd<3> RSPath::GetRSPath(const Vec3d &start_state, const Vec3d &goal_
                                  + start_state.block<2, 1>(0, 0);
         pose.z() = temp_pose.z();
 
-        path_poses.emplace_back(pose);
+        path_poses.emplace_back(Vec4d(pose(0), pose(1), pose(2), (double)isForward));
     }
 
     return path_poses;

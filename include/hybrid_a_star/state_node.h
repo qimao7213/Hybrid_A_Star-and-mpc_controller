@@ -68,7 +68,7 @@ struct StateNode {
     StateNode *parent_node_;
     typedef StateNode *Ptr;
 
-    VectorVec3d intermediate_states_;
+    VectorVec4d intermediate_states_;//x, t theta, isForward
 };
 
 #endif //HYBRID_A_STAR_STATE_NODE_H

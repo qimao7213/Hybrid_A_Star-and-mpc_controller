@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-    <name>hybrid_a_star</name>
+    <name>hybrid_a_star_zm0612</name>
     <version>0.0.0</version>
     <description>The hybrid_a_star package</description>
     <maintainer email="849742405@qq.com">Zhang Zhimeng</maintainer>

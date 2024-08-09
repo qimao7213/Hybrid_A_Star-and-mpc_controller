@@ -1,0 +1,21 @@
+    <node pkg="hybrid_a_star_zm0612" type="hybrid_a_star_zm0612" name="hybrid_a_star_zm0612" output="screen">
+        
+        <param name="planner/steering_angle" value="30.0"/><!-- <最大转弯角度的值，然后将这个值离散化为num份。向左和向右分开的> -->
+        <param name="planner/steering_angle_discrete_num" value="2"/>
+
+        <param name="planner/wheel_base" value="0.8"/><!-- <车前后两个轮的距离，用于前向采样积分，运动线模型 R = wheel_base/theta> -->
+        <param name="planner/segment_length" value="1.0"/><!-- <每次采样的路径长度> -->
+        <param name="planner/segment_length_discrete_num" value="8"/><!-- <采样的这一段线，由几个点表示> -->
+
+        <param name="planner/steering_penalty" value="1.5"/>
+        <param name="planner/reversing_penalty" value="3.0"/>
+        <param name="planner/steering_change_penalty" value="2.0"/>
+        <param name="planner/shot_distance" value="15.0"/>
+
+        <param name="planner/reverse_enable" value="0"/>
+
+        <param name="planner/vehicle_length" value="2.0"/>
+        <param name="planner/vehicle_width" value="1.0"/>
+        <param name="planner/vehicle_rear_dis" value="0.5"/>
+
+    </node>

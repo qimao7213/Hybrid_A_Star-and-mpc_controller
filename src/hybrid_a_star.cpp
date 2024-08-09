@@ -35,7 +35,7 @@
 HybridAStar::HybridAStar(double steering_angle, int steering_angle_discrete_num, double segment_length,
                          int segment_length_discrete_num, double wheel_base, double steering_penalty,
                          double reversing_penalty, double steering_change_penalty, double shot_distance,
-                         int grid_size_phi) {
+                         int grid_size_phi, bool reverse_enable) {
     wheel_base_ = wheel_base;
     segment_length_ = segment_length;
     steering_radian_ = steering_angle * M_PI / 180.0; // angle to radian
@@ -47,7 +47,7 @@ HybridAStar::HybridAStar(double steering_angle, int steering_angle_discrete_num,
     steering_change_penalty_ = steering_change_penalty;
     reversing_penalty_ = reversing_penalty;
     shot_distance_ = shot_distance;
-
+    reverse_enable_ = reverse_enable;
     CHECK_EQ(static_cast<float>(segment_length_discrete_num_ * move_step_size_), static_cast<float>(segment_length_))
         << "The segment length must be divisible by the step size. segment_length: "
         << segment_length_ << " | step_size: " << move_step_size_;
@@ -63,9 +63,14 @@ HybridAStar::~HybridAStar() {
     ReleaseMemory();
 }
 
+//这个是和地图相关的
+//x_lower，x_upper，y_lower，y_upper这几个量都是米制的
+//state_grid_resolution应该是状态的离散resolution，但是外面输入的却是地图分辨率？？
+//map_grid_resolution
 void HybridAStar::Init(double x_lower, double x_upper, double y_lower, double y_upper,
+                       double vehicle_length, double vehicle_width, double vehicle_rear_dis,
                        double state_grid_resolution, double map_grid_resolution) {
-    SetVehicleShape(4.7, 2.0, 1.3);
+    SetVehicleShape(vehicle_length, vehicle_width, vehicle_rear_dis);//车的外形参数，和碰撞检测有关，应该放到外面去
 
     map_x_lower_ = x_lower;
     map_x_upper_ = x_upper;
@@ -180,6 +185,7 @@ inline bool HybridAStar::LineCheck(double x0, double y0, double x1, double y1) {
     return true;
 }
 
+//就是将车近似为长方形，然后对四条边进行碰撞检测
 bool HybridAStar::CheckCollision(const double &x, const double &y, const double &theta) {
     Timer timer;
     Mat2d R;
@@ -290,6 +296,7 @@ void HybridAStar::SetObstacle(const double pt_x, const double pt_y) {
     map_data_[grid_index_x + grid_index_y * MAP_GRID_SIZE_X_] = 1;
 }
 
+//先给Vehicle的参数，然后离散化几个点，用于碰撞检测
 void HybridAStar::SetVehicleShape(double length, double width, double rear_axle_dist) {
     vehicle_shape_.resize(8);
     vehicle_shape_.block<2, 1>(0, 0) = Vec2d(-rear_axle_dist, width / 2);
@@ -356,7 +363,7 @@ void HybridAStar::GetNeighborNodes(const StateNode::Ptr &curr_node_ptr,
     neighbor_nodes.clear();
 
     for (int i = -steering_discrete_num_; i <= steering_discrete_num_; ++i) {
-        VectorVec3d intermediate_state;
+        VectorVec4d intermediate_state;
         bool has_obstacle = false;
 
         double x = curr_node_ptr->state_.x();
@@ -368,7 +375,7 @@ void HybridAStar::GetNeighborNodes(const StateNode::Ptr &curr_node_ptr,
         // forward
         for (int j = 1; j <= segment_length_discrete_num_; j++) {
             DynamicModel(move_step_size_, phi, x, y, theta);
-            intermediate_state.emplace_back(Vec3d(x, y, theta));
+            intermediate_state.emplace_back(Vec4d(x, y, theta, 1));
 
             if (!CheckCollision(x, y, theta)) {
                 has_obstacle = true;
@@ -376,17 +383,19 @@ void HybridAStar::GetNeighborNodes(const StateNode::Ptr &curr_node_ptr,
             }
         }
 
-        Vec3i grid_index = State2Index(intermediate_state.back());
+        Vec3i grid_index = State2Index(intermediate_state.back().head(3));
         if (!BeyondBoundary(intermediate_state.back().head(2)) && !has_obstacle) {
             auto neighbor_forward_node_ptr = new StateNode(grid_index);
             neighbor_forward_node_ptr->intermediate_states_ = intermediate_state;
-            neighbor_forward_node_ptr->state_ = intermediate_state.back();
+            neighbor_forward_node_ptr->state_ = intermediate_state.back().head(3);
             neighbor_forward_node_ptr->steering_grade_ = i;
             neighbor_forward_node_ptr->direction_ = StateNode::FORWARD;
             neighbor_nodes.push_back(neighbor_forward_node_ptr);
         }
 
         // backward
+        // 如果不能倒退，就提前结束
+        if(reverse_enable_ == 0) continue;
         has_obstacle = false;
         intermediate_state.clear();
         x = curr_node_ptr->state_.x();
@@ -394,7 +403,7 @@ void HybridAStar::GetNeighborNodes(const StateNode::Ptr &curr_node_ptr,
         theta = curr_node_ptr->state_.z();
         for (int j = 1; j <= segment_length_discrete_num_; j++) {
             DynamicModel(-move_step_size_, phi, x, y, theta);
-            intermediate_state.emplace_back(Vec3d(x, y, theta));
+            intermediate_state.emplace_back(Vec4d(x, y, theta, 0));
 
             if (!CheckCollision(x, y, theta)) {
                 has_obstacle = true;
@@ -403,10 +412,10 @@ void HybridAStar::GetNeighborNodes(const StateNode::Ptr &curr_node_ptr,
         }
 
         if (!BeyondBoundary(intermediate_state.back().head(2)) && !has_obstacle) {
-            grid_index = State2Index(intermediate_state.back());
+            grid_index = State2Index(intermediate_state.back().head(3));
             auto neighbor_backward_node_ptr = new StateNode(grid_index);
             neighbor_backward_node_ptr->intermediate_states_ = intermediate_state;
-            neighbor_backward_node_ptr->state_ = intermediate_state.back();
+            neighbor_backward_node_ptr->state_ = intermediate_state.back().head(3);
             neighbor_backward_node_ptr->steering_grade_ = i;
             neighbor_backward_node_ptr->direction_ = StateNode::BACKWARD;
             neighbor_nodes.push_back(neighbor_backward_node_ptr);
@@ -439,6 +448,8 @@ bool HybridAStar::BeyondBoundary(const Vec2d &pt) const {
 
 double HybridAStar::ComputeH(const StateNode::Ptr &current_node_ptr,
                              const StateNode::Ptr &terminal_node_ptr) {
+    //TODO：其实这里应该是一个考虑障碍物信息的2D A星吧？后续再改
+    //这里这两个都没有障碍物信息，所以是会出错的
     double h;
     // L2
 //    h = (current_node_ptr->state_.head(2) - terminal_node_ptr->state_.head(2)).norm();
@@ -446,11 +457,25 @@ double HybridAStar::ComputeH(const StateNode::Ptr &current_node_ptr,
     // L1
     h = (current_node_ptr->state_.head(2) - terminal_node_ptr->state_.head(2)).lpNorm<1>();
 
-    if (h < 3.0 * shot_distance_) {
+    if (h < 3.0 * shot_distance_ && reverse_enable_) {
         h = rs_path_ptr_->Distance(current_node_ptr->state_.x(), current_node_ptr->state_.y(),
                                    current_node_ptr->state_.z(),
                                    terminal_node_ptr->state_.x(), terminal_node_ptr->state_.y(),
                                    terminal_node_ptr->state_.z());
+    }
+    else if (h < 3.0 * shot_distance_ && !reverse_enable_)
+    {
+        // start
+        double q0[] = { current_node_ptr->state_.x(), current_node_ptr->state_.y(), current_node_ptr->state_.z() };
+        // goal
+        double q1[] = { terminal_node_ptr->state_.x(), terminal_node_ptr->state_.y(), terminal_node_ptr->state_.z() };
+        // initialize the path
+        DubinsPath::DubinsPath path;
+        // calculate the path
+        dubins_init(q0, q1, wheel_base_/steering_radian_, &path);
+
+        float length = dubins_path_length(&path);
+        h = length;
     }
 
     return h;
@@ -495,7 +520,7 @@ double HybridAStar::ComputeG(const StateNode::Ptr &current_node_ptr,
 bool HybridAStar::Search(const Vec3d &start_state, const Vec3d &goal_state) {
     Timer search_used_time;
 
-    double neighbor_time = 0.0, compute_h_time = 0.0, compute_g_time = 0.0;
+    double neighbor_time = 0.0, compute_h_time = 0.0, compute_g_time = 0.0, compute_anayExp_time = 0.0;
 
     const Vec3i start_grid_index = State2Index(start_state);
     const Vec3i goal_grid_index = State2Index(goal_state);
@@ -510,7 +535,7 @@ bool HybridAStar::Search(const Vec3d &start_state, const Vec3d &goal_state) {
     start_node_ptr->steering_grade_ = 0;
     start_node_ptr->direction_ = StateNode::NO;
     start_node_ptr->node_status_ = StateNode::IN_OPENSET;
-    start_node_ptr->intermediate_states_.emplace_back(start_state);
+    start_node_ptr->intermediate_states_.emplace_back(Vec4d(start_state(0), start_state(1), start_state(2), 1));
     start_node_ptr->g_cost_ = 0.0;
     start_node_ptr->f_cost_ = ComputeH(start_node_ptr, goal_node_ptr);
 
@@ -531,8 +556,11 @@ bool HybridAStar::Search(const Vec3d &start_state, const Vec3d &goal_state) {
         openset_.erase(openset_.begin());
 
         if ((current_node_ptr->state_.head(2) - goal_node_ptr->state_.head(2)).norm() <= shot_distance_) {
-            double rs_length = 0.0;
-            if (AnalyticExpansions(current_node_ptr, goal_node_ptr, rs_length)) {
+            double shot_length = 0.0;
+            Timer timer_compute_anaExp;
+            bool anaExSucc = AnalyticExpansions(current_node_ptr, goal_node_ptr, shot_length);
+            compute_anayExp_time += timer_compute_anaExp.End();
+            if (anaExSucc) {
                 terminal_node_ptr_ = goal_node_ptr;
 
                 StateNode::Ptr grid_node_ptr = terminal_node_ptr_->parent_node_;
@@ -540,15 +568,17 @@ bool HybridAStar::Search(const Vec3d &start_state, const Vec3d &goal_state) {
                     grid_node_ptr = grid_node_ptr->parent_node_;
                     path_length_ = path_length_ + segment_length_;
                 }
-                path_length_ = path_length_ - segment_length_ + rs_length;
+                path_length_ = path_length_ - segment_length_ + shot_length;
 
+                std::cout << "ComputeG use time(ms): " << compute_g_time << std::endl;
                 std::cout << "ComputeH use time(ms): " << compute_h_time << std::endl;
                 std::cout << "check collision use time(ms): " << check_collision_use_time << std::endl;
                 std::cout << "GetNeighborNodes use time(ms): " << neighbor_time << std::endl;
+                std::cout << "AnalyticExpansions use time(ms): " << compute_anayExp_time << std::endl;
                 std::cout << "average time of check collision(ms): "
                           << check_collision_use_time / num_check_collision
                           << std::endl;
-                ROS_INFO("\033[1;32m --> Time in Hybrid A star is %f ms, path length: %f  \033[0m\n",
+                ROS_INFO("\033[1;32m --> Time in Hybrid A star is %f ms, path length: %f  \033[0m",
                          search_used_time.End(), path_length_);
 
                 check_collision_use_time = 0.0;
@@ -566,7 +596,7 @@ bool HybridAStar::Search(const Vec3d &start_state, const Vec3d &goal_state) {
 
             Timer timer_compute_g;
             const double neighbor_edge_cost = ComputeG(current_node_ptr, neighbor_node_ptr);
-            compute_g_time = compute_g_time + timer_get_neighbor.End();
+            compute_g_time = compute_g_time + timer_compute_g.End();
 
             Timer timer_compute_h;
             const double current_h = ComputeH(current_node_ptr, goal_node_ptr) * tie_breaker_;
@@ -685,8 +715,8 @@ __attribute__((unused)) double HybridAStar::GetPathLength() const {
     return path_length_;
 }
 
-VectorVec3d HybridAStar::GetPath() const {
-    VectorVec3d path;
+VectorVec4d HybridAStar::GetPath() const {
+    VectorVec4d path;
 
     std::vector<StateNode::Ptr> temp_nodes;
 
@@ -731,16 +761,38 @@ void HybridAStar::Reset() {
 
 bool HybridAStar::AnalyticExpansions(const StateNode::Ptr &current_node_ptr,
                                      const StateNode::Ptr &goal_node_ptr, double &length) {
-    VectorVec3d rs_path_poses = rs_path_ptr_->GetRSPath(current_node_ptr->state_,
+    VectorVec4d shot_path_poses;
+    if(reverse_enable_)
+    {
+        shot_path_poses = rs_path_ptr_->GetRSPath(current_node_ptr->state_,
                                                         goal_node_ptr->state_,
                                                         move_step_size_, length);
+    }
+    else
+    {
+        double q0[] = { current_node_ptr->state_.x(), current_node_ptr->state_.y(), current_node_ptr->state_.z() };
+        double q1[] = { goal_node_ptr->state_.x(), goal_node_ptr->state_.y(), goal_node_ptr->state_.z() };
+        // initialize the path
+        DubinsPath::DubinsPath path;
+        // calculate the path
+        dubins_init(q0, q1, wheel_base_/steering_radian_, &path);
+        float length = dubins_path_length(&path);
+        float x = 0.f;
+        while (x <  length){
+            double q[3];
+            dubins_path_sample(&path, x, q);
+            shot_path_poses.push_back(Vec4d(q[0], q[1], q[2], 1.0));
+            x += move_step_size_;
+        }
+    }
 
-    for (const auto &pose: rs_path_poses)
+
+    for (const auto &pose: shot_path_poses)
         if (BeyondBoundary(pose.head(2)) || !CheckCollision(pose.x(), pose.y(), pose.z())) {
             return false;
         };
 
-    goal_node_ptr->intermediate_states_ = rs_path_poses;
+    goal_node_ptr->intermediate_states_ = shot_path_poses;
     goal_node_ptr->parent_node_ = current_node_ptr;
 
     auto begin = goal_node_ptr->intermediate_states_.begin();

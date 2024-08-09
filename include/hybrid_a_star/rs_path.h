@@ -97,7 +97,7 @@ public:
      * @param step_size actual step size for collision detection
      * @return Discrete points of reed shepp path, including position and yaw
      */
-    TypeVectorVecd<3> GetRSPath(const Vec3d &start_state, const Vec3d &goal_state, double step_size, double &length);
+    TypeVectorVecd<4> GetRSPath(const Vec3d &start_state, const Vec3d &goal_state, double step_size, double &length);
 
     RSPathData GetRSPath(double x_0, double y_0, double yaw_0,
                          double x_1, double y_1, double yaw_1);

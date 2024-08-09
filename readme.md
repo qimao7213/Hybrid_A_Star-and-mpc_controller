@@ -69,7 +69,7 @@ catkin_make
 
 ```shell
 source devel/setup.bash
-roslaunch hybrid_a_star run_hybrid_a_star.launch
+roslaunch hybrid_a_star_zm0612 hybrid_a_star_zm0612.launch
 ```
 
 **The starting point is selected by the `2D Pose Estimate` in rviz, and the end point is selected by the `2D Nav Goal`.**

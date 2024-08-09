@@ -4,7 +4,7 @@
     <visual name="base_visual">
       <origin xyz="0.4 0 0" rpy="1.5708 0 -1.5708" />
       <geometry>
-        <mesh filename="package://hybrid_a_star/model/car_model/CAR_original.dae" scale="1.1 1.1 1.1"/>
+        <mesh filename="package://hybrid_a_star_zm0612/model/car_model/CAR_original.dae" scale="0.8 0.8 0.8"/>
       </geometry>
     </visual>
   </link>

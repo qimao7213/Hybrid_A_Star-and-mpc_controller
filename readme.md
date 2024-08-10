@@ -32,7 +32,18 @@ sudo apt-get install libeigen3-dev
 sudo apt-get install libgoogle-glog-dev
 ```
 
-## 3. Build Hybrid A Star
+(5).  **osqp**
+
+```shell
+git clone --recursive -b release-0.6.3 https://github.com/oxfordcontrol/osqp.git
+cd osqp
+mkdir build && cd build
+cmake .. 
+make
+sudo make install
+```
+
+## 3. Build 
 
 ```shell
 # new folder
@@ -41,17 +52,22 @@ cd your_ws/src
 
 # Clone the repository
 git clone https://github.com/qimao7213/Hybrid_A_Star-and-mpc_controller.git
-
+git clone https://github.com/qimao7213/MPC_car.git
 # Build
 cd your_ws
 catkin_make
 ```
 
-## 4. Run Hybrid A Star
+## 4. Run
 
 ```shell
 source devel/setup.bash
+
+# Run Hybrid A Star
 roslaunch hybrid_a_star_zm0612 hybrid_a_star_zm0612.launch
+
+# Run mpc
+roslaunch mpc_car simulation.launch
 ```
 
 **The starting point is selected by the `2D Pose Estimate` in rviz, and the end point is selected by the `2D Nav Goal`.**
@@ -61,19 +77,7 @@ roslaunch hybrid_a_star_zm0612 hybrid_a_star_zm0612.launch
 > If your start and end points are too close to obstacles, the collision detection mechanism may be triggered and no feasible paths will be searched and displayed
 
 > You can change the algorithm parameters at hybrid_a_star_zm0612.launch.
-## 5. Mpc controller
-```shell
-The car is modeled as a bicycle model. NMPC is used to make the car follow the planned path.
-# Clone the repository in the /src
-git clone https://github.com/qimao7213/MPC_car.git
 
-# Build
-cd your_ws
-catkin_make
-
-#Run mpc
-roslaunch mpc_car simulation.launch
-```
 ## 6. Bug 报告和改进建议 | Bug Reports and Improvement Suggestions
 
 当前程序可能还存在一些 Bug 或不稳定的地方。如果你在使用过程中发现了问题，或者有更好的解决方案，请不要犹豫，通过以下方式告诉我：
